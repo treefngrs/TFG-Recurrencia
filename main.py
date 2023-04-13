@@ -1,8 +1,8 @@
-from poly import Poly
-from exp import Exp
+from src.poly import Poly
+from src.exp import Exp
 from fractions import Fraction
-from recurrence import Recurrence
-from tools import factors,binomial,factorial
+from src.recurrence import Recurrence
+from src.tools import factors,binomial,factorial
 
 print()
 p1 = Poly(1,0,-9,-4,12)
