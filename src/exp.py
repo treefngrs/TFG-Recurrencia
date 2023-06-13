@@ -1,5 +1,5 @@
 class Exp:
-    #exp := var^m*base^var+s
+    
     def __init__(self, base, a=1, s=0, m=0, var = 'n'):
         self.base = base    
         self.a = a
@@ -10,6 +10,7 @@ class Exp:
     def __repr__(self):
         return f"Exp({('',a)[bool(a-1)]},{self.base},{('',s)[bool(s)]})" 
 
+    #representacion de la expresión en LaTeX
     def __str__(self):
         ret = ""
         if self.a and self.a!=1:
@@ -32,5 +33,6 @@ class Exp:
             ret+=f"{self.var}"
         return ret
 
+    #evalua la expresion para un valor n
     def eval(self, n):
         return self.a*self.base**(n+self.s)
