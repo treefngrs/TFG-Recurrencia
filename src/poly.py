@@ -91,8 +91,8 @@ class Poly:
         #cota de laguerre para raices reales
         bounds = sorted((-b/(n*a)-((n-1)/(n*a))*sqrt((b**2)-(2*n/(n-1))*a*c), -b/(n*a)+((n-1)/(n*a))*sqrt((b**2)-(2*n/(n-1))*a*c)))
         bounds = [bounds[0]-1,bounds[1]+1]
-        v1 = list(p.eval(bounds[0]) for p in pols)
-        v2 = list(p.eval(bounds[1]) for p in pols)
+        v1 = [x for x in (p.eval(bounds[0]) for p in pols) if x != 0]
+        v2 = [x for x in (p.eval(bounds[1]) for p in pols) if x != 0]
         v = signchanges(v1)-signchanges(v2)
         bounds = [(*bounds,v)]
 

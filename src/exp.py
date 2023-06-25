@@ -34,5 +34,5 @@ class Exp:
         return ret
 
     #evalua la expresion para un valor n
-    def eval(self, n):
-        return self.a*self.base**(n+self.s)
+    def eval(self,n):
+        return self.a*n**self.m*self.base**(n+self.s)

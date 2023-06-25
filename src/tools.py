@@ -61,16 +61,22 @@ def gauss(a,b):
 	n = len(b)
 	x = np.zeros(n)
 	A = np.hstack((a, np.atleast_2d(b).T))
-	for i in range(n):    
+	
+	for i in range(n):
+		
+		rolls = 0
+		while(A[i][i] == 0):
+			if rolls>n-i:
+				return None 
+			A[i:] = np.roll(A[i:], n+1)
+			rolls +=1
+		
 		for j in range(i+1, n):
 			r = A[j][i]/A[i][i]
-
 			for k in range(n+1):
-				A[j][k] = A[j][k] - r * A[i][k]
+				A[j][k] = A[j][k] - r*A[i][k]
 
-	x[n-1] = A[n-1][n]/A[n-1][n-1]
-
-	for i in range(n-2,-1,-1):
+	for i in range(n-1,-1,-1):
 		x[i] = A[i][n]
 	
 		for j in range(i+1,n):

@@ -1,12 +1,12 @@
+import numpy as np
 from .poly import Poly
 from .exp import Exp
 from .tools import binomial,factorial,gauss
-import numpy as np
 from fractions import Fraction
 
 class Recurrence:
 
-	def __init__(self, *coeffs, init=False, pol=None, exp=None, var='a'):
+	def __init__(self, *coeffs, init=False, pol=None, exp=None, var='x'):
 		self.coeffs = list(coeffs)
 		self.r = len(self.coeffs)
 		self.init = init
@@ -17,7 +17,7 @@ class Recurrence:
 	def __repr__(self):
 		return f"Recurrence({list(coeffs)}, init={self.init})"
 
-	#representación de la ley de recurrencia en LaTeX
+	#representación de la ley de recurrencia 
 	def __str__(self):
 		res = f"{self.var}_n = "
 		for i,c in enumerate(self.coeffs):
@@ -85,22 +85,21 @@ class Recurrence:
 				for k in range(j,m+1):
 					A[j][k]-=self.coeffs[i-1]*(-1)**(k-j)*binomial(k,j)*i**(k-j)
 
-		c=self.pol.coeffs[::-1]+[0]*e
-
-		for i in range(self.r-e,-1,-1):
-			c[i]-=sum(A[i][j]*c[j] for j in range(i+1,self.r+1))
-			c[i]=Fraction(c[i],A[i][i+e])
-		
+		if e:
+			A = [row[e:] for row in A[:-e]]
+		c=self.pol.coeffs[::-1]
+		for i in range(self.pol.degree,-1,-1):
+			c[i]-=sum(A[i][j]*c[j] for j in range(i+1,self.pol.degree+1))
+			c[i]=Fraction(c[i],A[i][i])
 		return c[::-1]+[0]*e
 
 	#resuelve la parte no homogenea de la recurrencia para las exponenciales
 	def nhp_exp(self,e):
 		exp = self.exp
-		chpol = Poly(1, *[-x for x in self.coeffs])
 		if not e:
-			return Fraction(exp.a,(exp.base**-exp.s)*(1-sum(Fraction(x,exp.base**(k+1)) for k,x in enumerate(self.coeffs))))
+			return Fraction(exp.a*(exp.base**exp.s),(1-sum(Fraction(x,exp.base**(k+1)) for k,x in enumerate(self.coeffs))))
 		if e:
-			return Fraction(-exp.a,(exp.base**-exp.s)*(sum(Fraction(x*(-k-1)**e,exp.base**(k+1)) for k,x in enumerate(self.coeffs))))
+			return Fraction(-exp.a*(exp.base**exp.s),(sum(Fraction(x*(-k-1)**e,exp.base**(k+1)) for k,x in enumerate(self.coeffs))))
 
 	def solve(self):
 		#polinomio y raices características
@@ -108,15 +107,32 @@ class Recurrence:
 		roots = chpol.findallroots()
 		nhppol = None
 		nhpexp = None
-		steps = '{ ' + f'"Polinomio característico":"{chpol}", "Raíces características":"{roots}", '
+		steps = '{ ' + f'"Polinomio característico":"{chpol}", "Raíces características":"{dict.__repr__(roots)}", '
 
 		#parte no homogenea
 		if self.pol and isinstance(self.pol, Poly):
 			nhppol = Poly(*self.nhp_pol(roots[1]), var='n')
-			steps += f'"Resolver parte no homogénea (polinomio)":"{nhppol}", '
+			steps += f'"Forma de la solución particular (polinómica)":"'
+			for i in range(self.pol.degree+1):
+				if i == self.pol.degree+roots[1]:
+					steps+=f'k_{i}'
+				elif i == self.pol.degree+roots[1]-1:
+					steps+=f'k_{i}*n+'
+				else:
+					steps+=f'k_{i}*n^{self.pol.degree+roots[1]-i}+'
+			steps = steps.strip('+')
+
+			steps += f'", Solución particular (polinómica)":"{nhppol}", '
 		if self.exp and isinstance(self.exp, Exp):
 			nhpexp = Exp(self.exp.base,a=self.nhp_exp(roots[self.exp.base]),m=roots[self.exp.base])
-			steps += f'"Resolver parte no homogénea (exponencial)":"{nhpexp}", '
+			print("AAAA",nhpexp)
+			steps += f'"Forma de la solución particular (exponencial)":"A*'
+			if roots[self.exp.base]:
+				steps += 'n'
+				if roots[self.exp.base]>1:
+					steps += f'^{roots[self.exp.base]}*'
+			steps += f'{self.exp.base}^n", '
+			steps += f'"Solución particular (exponencial)":"{nhpexp}", '
 		
 		#construccion de expresion explicita general
 		ret = f"{self.var}_n = "
@@ -135,12 +151,13 @@ class Recurrence:
 			i+=roots[r]
 		
 		if nhppol:
-			ret+= '('+nhppol.__str__()+') + ' 
+			ret+= nhppol.__str__()+' + ' 
 
 		if nhpexp:
-			ret+= '('+nhpexp.__str__()+') + '
+			ret+= nhpexp.__str__()+' + '
 
 		ret = ret.strip('+ ')
+		ret = ret.replace('+ -','- ')
 		steps += f'"Forma explícita general":"{ret}"'
 		if not self.init:
 			return steps+' }'
@@ -182,11 +199,12 @@ class Recurrence:
 			i+=roots[r]
 		
 		if nhppol:
-			ret+= '('+nhppol.__str__()+') + '
+			ret+= nhppol.__str__()+' + ' 
+
 		if nhpexp:
-			ret+= '('+nhpexp.__str__()+') + '
+			ret+= nhpexp.__str__()+' + '
 
-
-		ret = ret.strip('+ ')		
+		ret = ret.strip('+ ')
+		ret = ret.replace('+ -','- ')	
 		steps += f', "Resultado":"{ret}"' + ' }'
 		return steps
